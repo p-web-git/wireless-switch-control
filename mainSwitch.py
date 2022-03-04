@@ -18,6 +18,15 @@ def processNewEventOnSM(client, userdata, msg):
 	ev = json.loads(payload).get('action')
 	device.on_event(ev)
 
+def processFeedbackOnSM(client, userdata, msg):
+	global device
+	if msg.payload.decode() == '0':
+		print ('manually off')
+		device.on_event('off')
+	else:
+		print ('manually on')
+		device.on_event('on')
+
 def sendApiCommand(cmd):
 	global mqttWled
 	mqttWled.send('api', cmd)
@@ -49,11 +58,13 @@ termninateFlag = False
 device = SwithStateMachine()
 
 mqttWled = mqttClient(topic='wled/room', send_status = False)
+mqttWled.subscribe('wled/room/g')
+mqttWled.recvHandler(processFeedbackOnSM)
+
 switch_states.sendIncrementCommand = sendIncrementCommand
 switch_states.sendOnCommand = sendOnCommand
 switch_states.sendOffCommand = sendOffCommand
 switch_states.sendApiCommand = sendApiCommand
-
 
 mqttSwitch =  mqttClient(send_status = False)
 mqttSwitch.subscribe('zigbee/wireless_switch/#')
