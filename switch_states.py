@@ -4,7 +4,7 @@ import threading
 
 class unknown(State):
     def on_event(self, event):
-        if event == 'single':
+        if event == 'off' or event == 'single':
             return off()
         elif event == 'double':
             return double()
@@ -17,7 +17,7 @@ class on(State):
         sendOnCommand()
 
     def on_event(self, event):
-        if event == 'single':
+        if event == 'off' or event == 'single':
             return off()
         elif event == 'double':
             return double()
@@ -30,7 +30,9 @@ class off(State):
         sendOffCommand()
 
     def on_event(self, event):
-        if event == 'single':
+        if event == 'on':
+            return on()
+        elif event == 'single':
             sendApiCommand('PL=3&A=250')
             return on()
         elif event == 'double':
@@ -64,7 +66,7 @@ class double(State):
         sendApiCommand('PL=1')
 
     def on_event(self, event):
-        if event == 'single':
+        if event == 'off' or event == 'single':
            return off()
         elif event == 'double':
            sendApiCommand('PL=2')
@@ -72,11 +74,11 @@ class double(State):
            return pressed()
         return self
 
-    def thread_inc(self):
-        if self.do_run and self.n_runs < 30:
-            threading.Timer(0.15, self.thread_inc).start()
-            sendIncrementCommand(min(self.n_runs + 1, 5))
-            self.n_runs += 1
+#    def thread_inc(self):
+#        if self.do_run and self.n_runs < 30:
+#            threading.Timer(0.15, self.thread_inc).start()
+#            sendIncrementCommand(min(self.n_runs + 1, 5))
+#            self.n_runs += 1
 
 
 class SwithStateMachine(object):
@@ -88,13 +90,13 @@ class SwithStateMachine(object):
         # The next state will be the result of the on_event function.
         self.state = self.state.on_event(event)
 
-
 if __name__ == "__main__":
 	import time
 	from mock_cmd import *
 
-	eventList = ['single', 'hold', '', '', 'release', 'single', 'single', 'hold', 'release', 'single', 'hold', '', 'release', 'single', 'single', 'hold', 'release', 'single']
+	eventList = ['single', 'hold', '', '', 'release', 'single', 'single', 'hold', 'release', 'single', 'hold', '', 'release', 'single', 'single', 'hold', 'release', 'single', 'off', 'on', 'on', 'on', 'giberish']
 	sm = SwithStateMachine()
 	for ev in eventList:
 		sm.on_event(ev)
 		time.sleep(0.5)
+
