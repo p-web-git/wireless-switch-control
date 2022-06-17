@@ -1,5 +1,6 @@
 import logging
 
+
 class State(object):
     """
     We define a state object which provides some utility functions for the

@@ -1,46 +1,36 @@
-from switch_states import SwithStateMachine
+from switchStateMachine import SwitchStateMachine
 from mqttClient import mqttClient
+from wledCmd import *
 from dotenv import find_dotenv, load_dotenv
+import switchStateMachine
 import os
-import switch_states
 import logging
-import time
 import json
-import signal
-import sys
 import sentry_sdk
 
-load_dotenv(find_dotenv())
+
+# Global variables
+SSM = None
+
+
+# Receive handlers to be called from the inside of mqtt, and send events to SM
 
 def processNewEventOnSM(client, userdata, msg):
-	global device
-	payload = msg.payload.decode()
-	ev = json.loads(payload).get('action')
-	device.on_event(ev)
+    global SSM
+    payload = msg.payload.decode()
+    ev = json.loads(payload).get('action')
+    SSM.on_event(ev)
+
 
 def processFeedbackOnSM(client, userdata, msg):
-	global device
-	if msg.payload.decode() == '0':
-		print ('manually off')
-		device.on_event('off')
-	else:
-		print ('manually on')
-		device.on_event('on')
+    global SSM
+    if msg.payload.decode() == '0':
+        print('manually off')
+        SSM.on_event('off')
+    else:
+        print('manually on')
+        SSM.on_event('on')
 
-def sendApiCommand(cmd):
-	global mqttWled
-	mqttWled.send('api', cmd)
-
-def sendIncrementCommand(value):
-	sendApiCommand('A=~'+str(value))
-
-def sendOnCommand(lowBrightness=False):
-	global mqttWled
-	mqttWled.send(msg='ON')
-
-def sendOffCommand():
-	global mqttWled
-	mqttWled.send(msg='OFF')
 
 sentry_sdk.init(
     os.getenv('SENTRY_SWITCH'),
@@ -50,30 +40,38 @@ sentry_sdk.init(
     traces_sample_rate=1.0
 )
 
-logging.basicConfig(format='%(levelname)-8s %(message)s', level=logging.DEBUG)
-logging.info('Start')
 
-termninateFlag = False
+def _main():
+    logging.basicConfig(format='%(levelname)-8s %(message)s', level=logging.DEBUG)
+    logging.info('Start')
 
-device = SwithStateMachine()
+    load_dotenv(find_dotenv())
 
-mqttWled = mqttClient(topic='wled/room', send_status = False)
-mqttWled.subscribe('wled/room/g')
-mqttWled.recvHandler(processFeedbackOnSM)
+    global SSM, mqttWled
+    SSM = SwitchStateMachine()
 
-switch_states.sendIncrementCommand = sendIncrementCommand
-switch_states.sendOnCommand = sendOnCommand
-switch_states.sendOffCommand = sendOffCommand
-switch_states.sendApiCommand = sendApiCommand
+    mqttWled = mqttClient(topic='wled/room', send_status=False)
+    mqttWled.subscribe('wled/room/g')
+    mqttWled.recvHandler(processFeedbackOnSM)
 
-mqttSwitch =  mqttClient(send_status = False)
-mqttSwitch.subscribe('zigbee/wireless_switch/#')
-mqttSwitch.recvHandler(processNewEventOnSM)
+    switchStateMachine.sendOnCommand = sendOnCommand
+    switchStateMachine.sendOffCommand = sendOffCommand
+    switchStateMachine.sendIncrementCommand = sendIncrementCommand
+    switchStateMachine.sendApiCommand = sendApiCommand
 
-mqttWled.client.loop_start()
-mqttSwitch.client.loop_forever()
+    mqttSwitch = mqttClient(send_status=False)
+    # mqttSwitch.subscribe('zigbee/wireless_switch/#')
+    mqttSwitch.subscribe('zigbee/switch/ikea')
+    mqttSwitch.recvHandler(processNewEventOnSM)
 
-mqttSwitch.close()
-mqttWled.close()
+    mqttWled.client.loop_start()
+    mqttSwitch.client.loop_forever()
 
-logging.info('Exit')
+    mqttSwitch.close()
+    mqttWled.close()
+
+    logging.info('Exit')
+
+
+if __name__ == '__main__':
+    _main()
