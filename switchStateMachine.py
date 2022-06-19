@@ -5,12 +5,8 @@ import threading
 
 class unknown(State):
     def on_event(self, event):
-        if event == 'off' or event == 'single':
+        if event == 'off':
             return off()
-        elif event == 'double':
-            return double()
-        elif event == 'hold':
-            return pressed()
         return self
 
 
@@ -19,11 +15,9 @@ class on(State):
         sendOnCommand()
 
     def on_event(self, event):
-        if event == 'off' or event == 'single':
+        if event == 'off':
             return off()
-        elif event == 'double':
-            return double()
-        elif event == 'hold':
+        elif event == 'brightness_move_up':
             return pressed()
         return self
 
@@ -34,13 +28,9 @@ class off(State):
 
     def on_event(self, event):
         if event == 'on':
+            sendApiCommand('PL=1&A=250')
             return on()
-        elif event == 'single':
-            sendApiCommand('PL=3&A=250')
-            return on()
-        elif event == 'double':
-            return double()
-        elif event == 'hold':
+        elif event == 'brightness_move_up':
             return pressed()
         return self
 
@@ -53,7 +43,7 @@ class pressed(State):
         self.thread.start()
 
     def on_event(self, event):
-        if event == 'release':
+        if event == 'brightness_stop':
             self.do_run = False
             self.thread.join()
             return on()
@@ -64,20 +54,6 @@ class pressed(State):
             threading.Timer(0.15, self.thread_inc).start()
             sendIncrementCommand(min(self.n_runs + 1, 5))
             self.n_runs += 1
-
-
-class double(State):
-    def __on_entry__(self):
-        sendApiCommand('PL=1')
-
-    def on_event(self, event):
-        if event == 'off' or event == 'single':
-            return off()
-        elif event == 'double':
-            sendApiCommand('PL=2')
-        elif event == 'hold':
-            return pressed()
-        return self
 
 
 class SwitchStateMachine(object):
@@ -94,8 +70,8 @@ if __name__ == "__main__":
     import time
     from mockCmd import *
 
-    eventList = ['single', 'hold', '', '', 'release', 'single', 'single', 'hold', 'release', 'single', 'hold', '',
-                 'release', 'single', 'single', 'hold', 'release', 'single', 'off', 'on', 'on', 'on', 'giberish']
+    eventList = ['off', 'on', '', '', 'brightness_move_up', '', '', 'brightness_stop', 'off', 'off', 'off', 'on']
+               #  'release', 'single', 'single', 'hold', 'release', 'single', 'off', 'on', 'on', 'on', 'giberish']
     sm = SwitchStateMachine()
     for ev in eventList:
         sm.on_event(ev)
