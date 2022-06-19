@@ -1,20 +1,17 @@
-mqttWled = None
+import globalVars
 
 
 def sendOnCommand(lowBrightness=False):
-    global mqttWled
-    mqttWled.send(msg='ON')
+    globalVars.mqttWled.send(msg='ON')
 
 
 def sendOffCommand():
-    global mqttWled
-    mqttWled.send(msg='OFF')
+    globalVars.mqttWled.send(msg='OFF')
 
 
 def sendApiCommand(cmd):
-    global mqttWled
-    mqttWled.send('api', cmd)
+    globalVars.mqttWled.send('api', cmd)
 
 
 def sendIncrementCommand(value):
-    sendApiCommand('A=~' + str(value))
+    globalVars.mqttWled.sendApiCommand('A=~' + str(value))

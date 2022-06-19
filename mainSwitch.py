@@ -1,8 +1,9 @@
 from switchStateMachine import SwitchStateMachine
 from mqttClient import mqttClient
-from wledCmd import *
 from dotenv import find_dotenv, load_dotenv
 import switchStateMachine
+from wledCmd import *
+import globalVars
 import os
 import logging
 import json
@@ -11,7 +12,6 @@ import sentry_sdk
 
 # Global variables
 SSM = None
-
 
 # Receive handlers to be called from the inside of mqtt, and send events to SM
 
@@ -31,7 +31,6 @@ def processFeedbackOnSM(client, userdata, msg):
         print('manually on')
         SSM.on_event('on')
 
-
 sentry_sdk.init(
     os.getenv('SENTRY_SWITCH'),
     # Set traces_sample_rate to 1.0 to capture 100%
@@ -47,17 +46,19 @@ def _main():
 
     load_dotenv(find_dotenv())
 
-    global SSM, mqttWled
-    SSM = SwitchStateMachine()
+    global SSM
 
     mqttWled = mqttClient(topic='wled/room', send_status=False)
+    globalVars.mqttWled = mqttWled
     mqttWled.subscribe('wled/room/g')
-    mqttWled.recvHandler(processFeedbackOnSM)
 
+    SSM = SwitchStateMachine()
     switchStateMachine.sendOnCommand = sendOnCommand
     switchStateMachine.sendOffCommand = sendOffCommand
     switchStateMachine.sendIncrementCommand = sendIncrementCommand
     switchStateMachine.sendApiCommand = sendApiCommand
+
+    mqttWled.recvHandler(processFeedbackOnSM)
 
     mqttSwitch = mqttClient(send_status=False)
     # mqttSwitch.subscribe('zigbee/wireless_switch/#')

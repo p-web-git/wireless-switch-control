@@ -71,7 +71,7 @@ def _main():
     logging.basicConfig(level=logging.DEBUG)
 
     client = mqttClient('test')
-    client.send('abc', 10)
+    client.send('abc', '10')
 
     log = {'fields': {'temperature': 18.27, 'humidity': 48.363, 'pressure': 1025.4}}
     client.sendObj("", log['fields'])
