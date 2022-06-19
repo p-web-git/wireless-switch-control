@@ -72,10 +72,12 @@ class HoldDecrement(DeIncrement):
         DeIncrement.__on_entry__(self)
 
 
+
 class SwitchStateMachine(object):
     def __init__(self):
         # Start with a default state.
         self.state = Unknown()
+
 
     def on_event(self, event):
         # The next state will be the result of the on_event function.
@@ -88,6 +90,7 @@ if __name__ == "__main__":
 
     eventList = ['off', 'on', '', '', 'brightness_move_up', '', '', 'brightness_stop', 'off', 'off', 'off', 'on',
                  'brightness_move_down', '', 'brightness_stop', 'on', 'off', 'on', 'giberish']
+
     sm = SwitchStateMachine()
     for ev in eventList:
         sm.on_event(ev)
