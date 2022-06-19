@@ -6,12 +6,14 @@ class Unknown(State):
     def on_event(self, event):
         if event == 'off':
             return Off()
+        elif event == 'on':
+            return On()
         return self
 
 
 class On(State):
     def __on_entry__(self):
-        sendOnCommand()
+        pass
 
     def on_event(self, event):
         if event == 'off':
@@ -32,6 +34,7 @@ class Off(State):
             sendApiCommand('PL=1')
             return On()
         elif event == 'brightness_move_up':
+            sendApiCommand('PL=1&A=1')
             return HoldIncrement()
         return self
 
