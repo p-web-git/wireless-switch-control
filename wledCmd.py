@@ -14,4 +14,4 @@ def sendApiCommand(cmd):
 
 
 def sendIncrementCommand(value):
-    globalVars.mqttWled.sendApiCommand('A=~' + str(value))
+    sendApiCommand('A=~' + str(value))
