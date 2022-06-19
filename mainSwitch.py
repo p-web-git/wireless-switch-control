@@ -10,26 +10,21 @@ import json
 import sentry_sdk
 
 
-# Global variables
-SSM = None
-
 # Receive handlers to be called from the inside of mqtt, and send events to SM
 
 def processNewEventOnSM(client, userdata, msg):
-    global SSM
     payload = msg.payload.decode()
     ev = json.loads(payload).get('action')
-    SSM.on_event(ev)
+    globalVars.SSM.on_event(ev)
 
 
 def processFeedbackOnSM(client, userdata, msg):
-    global SSM
     if msg.payload.decode() == '0':
-        print('manually off')
-        SSM.on_event('off')
+        logging.info('Detected Wled switch off')
+        globalVars.SSM.on_event('off')
     else:
-        print('manually on')
-        SSM.on_event('on')
+        logging.info('Detected Wled switch on')
+        globalVars.SSM.on_event('on')
 
 sentry_sdk.init(
     os.getenv('SENTRY_SWITCH'),
@@ -53,6 +48,7 @@ def _main():
     mqttWled.subscribe('wled/room/g')
 
     SSM = SwitchStateMachine()
+    globalVars.SSM = SSM
     switchStateMachine.sendOnCommand = sendOnCommand
     switchStateMachine.sendOffCommand = sendOffCommand
     switchStateMachine.sendIncrementCommand = sendIncrementCommand

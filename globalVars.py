@@ -1,1 +1,2 @@
 mqttWled = None
+SSM = None
