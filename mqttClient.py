@@ -52,7 +52,7 @@ class mqttClient:
 
     def subscribe(self, topic):
         self.client.subscribe(topic)
-        logging.debug(str('Subscribe: ' + topic))
+        logging.debug(str('Subscribe: ' + str(topic)))
 
     def recvHandler(self, fn):
         self.client.on_message = fn

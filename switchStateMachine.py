@@ -62,13 +62,13 @@ class DeIncrement(State):
 
 class HoldIncrement(DeIncrement):
     def __on_entry__(self):
-        self.inc_multiplier = 1
+        self.inc_multiplier = 2
         DeIncrement.__on_entry__(self)
 
 
 class HoldDecrement(DeIncrement):
     def __on_entry__(self):
-        self.inc_multiplier = -1
+        self.inc_multiplier = -2
         DeIncrement.__on_entry__(self)
 
 

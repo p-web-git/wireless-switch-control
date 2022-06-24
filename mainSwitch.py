@@ -13,9 +13,19 @@ import sentry_sdk
 # Receive handlers to be called from the inside of mqtt, and send events to SM
 
 def processNewEventOnSM(client, userdata, msg):
-    payload = msg.payload.decode()
-    ev = json.loads(payload).get('action')
-    globalVars.SSM.on_event(ev)
+     if msg.topic == 'zigbee/bridge/state':
+        payload = msg.payload.decode()
+        state = json.loads(payload).get('state')
+        if state == 'offline':
+            logging.warning('Zigbee bridge is offline! isnt possible to receive command from the switch')
+        elif state == 'online':
+            logging.warning('Zigbee bridge is online')
+     elif msg.topic == 'zigbee/switch/ikea':
+        payload = msg.payload.decode()
+        ev = json.loads(payload).get('action')
+        globalVars.SSM.on_event(ev)
+     else:
+        logging.error('Zigbee: Unknown message')
 
 
 def processFeedbackOnSM(client, userdata, msg):
@@ -36,7 +46,7 @@ sentry_sdk.init(
 
 
 def _main():
-    logging.basicConfig(format='%(levelname)-8s %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)-8s %(message)s', level=logging.INFO)
     logging.info('Start')
 
     load_dotenv(find_dotenv())
@@ -58,7 +68,7 @@ def _main():
 
     mqttSwitch = mqttClient(send_status=False)
     # mqttSwitch.subscribe('zigbee/wireless_switch/#')
-    mqttSwitch.subscribe('zigbee/switch/ikea')
+    mqttSwitch.subscribe([('zigbee/switch/ikea', 0), ('zigbee/bridge/state', 0)])
     mqttSwitch.recvHandler(processNewEventOnSM)
 
     mqttWled.client.loop_start()
