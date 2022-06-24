@@ -20,10 +20,10 @@ def processNewEventOnSM(client, userdata, msg):
 
 def processFeedbackOnSM(client, userdata, msg):
     if msg.payload.decode() == '0':
-        logging.info('Detected Wled switch off')
+        logging.debug('Detected Wled switch off')
         globalVars.SSM.on_event('off')
     else:
-        logging.info('Detected Wled switch on')
+        logging.debug('Detected Wled switch on')
         globalVars.SSM.on_event('on')
 
 sentry_sdk.init(
